@@ -1,6 +1,8 @@
 @model WalletSetupViewModel
 @{
-    ViewData.SetTitle(StringLocalizer["Enter your extended public key"]);
+    ViewData.SetTitle(Model.IsBLSCT
+        ? StringLocalizer["Enter your BLSCT audit key"]
+        : StringLocalizer["Enter your extended public key"]);
 }
 
 @section Navbar {
@@ -11,12 +13,21 @@
 
 <header class="text-center">
     <h1>@ViewData["Title"]</h1>
-    <p class="lead text-secondary mt-3">
-        <span text-translate="true">This key, also called "xpub", is used to generate individual destination addresses for your invoices.</span>
-        <a href="https://docs.btcpayserver.org/FAQ/Wallet/#what-is-a-derivation-scheme" target="_blank" rel="noreferrer noopener" title="@StringLocalizer["More information..."]">
-            <vc:icon symbol="info"/>
-        </a>
-    </p>
+    @if (Model.IsBLSCT)
+    {
+        <p class="lead text-secondary mt-3">
+            <span text-translate="true">The BLSCT audit key allows BTCPayServer to derive payment addresses and monitor your wallet balance without spending authority.</span>
+        </p>
+    }
+    else
+    {
+        <p class="lead text-secondary mt-3">
+            <span text-translate="true">This key, also called "xpub", is used to generate individual destination addresses for your invoices.</span>
+            <a href="https://docs.btcpayserver.org/FAQ/Wallet/#what-is-a-derivation-scheme" target="_blank" rel="noreferrer noopener" title="@StringLocalizer["More information..."]">
+                <vc:icon symbol="info"/>
+            </a>
+        </p>
+    }
 </header>
 
 <form method="post" class="my-5">
@@ -25,13 +36,31 @@
     <input asp-for="AccountKey" type="hidden" />
 
     <div class="form-group">
-        <label asp-for="DerivationScheme" class="form-label" text-translate="true">Extended public key</label>
-        <textarea asp-for="DerivationScheme" class="form-control store-derivation-scheme font-monospace py-2" rows="2"></textarea>
+        @if (Model.IsBLSCT)
+        {
+            <label asp-for="DerivationScheme" class="form-label" text-translate="true">BLSCT audit key</label>
+        }
+        else
+        {
+            <label asp-for="DerivationScheme" class="form-label" text-translate="true">Extended public key</label>
+        }
+        <textarea asp-for="DerivationScheme" class="form-control store-derivation-scheme font-monospace py-2" rows="@(Model.IsBLSCT ? 3 : 2)" placeholder="@(Model.IsBLSCT ? "blsct:VIEW_KEY_HEX:SPEND_KEY_HEX or raw 160-char hex from getblsctauditkey" : "")"></textarea>
         <span asp-validation-for="DerivationScheme" class="text-danger"></span>
+        @if (Model.IsBLSCT)
+        {
+            <div class="form-text" text-translate="true">
+                Run <code>navio-cli -testnet getblsctauditkey</code> to get your audit key.
+                You can paste the raw 160-character hex output directly, or use the format
+                <code>blsct:VIEW_KEY_HEX:SPEND_KEY_HEX</code> (64 + 96 hex characters).
+            </div>
+        }
     </div>
 
     <button name="command" type="submit" class="btn btn-primary" value="save" id="Continue" text-translate="true">Continue</button>
 </form>
+
+@if (!Model.IsBLSCT)
+{
 <style>
     #AddressTypes .additional { display: none; }
     #AddressTypes.expanded .additional { display: table-row; }
@@ -111,3 +140,4 @@
     <vc:icon symbol="caret-down"/>
     <span class="ms-1" text-translate="true">Show multi-sig examples</span>
 </button>
+}

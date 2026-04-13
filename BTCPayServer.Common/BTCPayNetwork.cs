@@ -94,6 +94,11 @@ namespace BTCPayServer
         public int MaxTrackedConfirmation { get; set; } = 6;
         public bool SupportPayJoin { get; set; } = false;
         public bool SupportLightning { get; set; } = true;
+        /// <summary>
+        /// True for BLSCT-based coins (e.g. Navio). Wallet import uses audit key
+        /// instead of xpub, and address derivation uses native libblsct P/Invoke.
+        /// </summary>
+        public bool IsBLSCT { get; set; } = false;
 
         public override T ToObject<T>(string json)
         {

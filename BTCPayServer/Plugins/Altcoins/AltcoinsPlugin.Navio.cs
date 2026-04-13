@@ -29,7 +29,8 @@ public partial class AltcoinsPlugin
                 : new KeyPath("1'"),
             SupportRBF = true,
             SupportPayJoin = false,
-            VaultSupported = true
+            VaultSupported = false,
+            IsBLSCT = true
         }.SetDefaultElectrumMapping(ChainName);
 
         var blockExplorerLink = ChainName == ChainName.Mainnet
