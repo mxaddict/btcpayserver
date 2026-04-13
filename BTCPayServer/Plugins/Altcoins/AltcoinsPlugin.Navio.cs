@@ -11,7 +11,7 @@ public partial class AltcoinsPlugin
 {
     public void InitNavio(IServiceCollection services)
     {
-        var nbxplorerNetwork = NBXplorerNetworkProvider.GetNAV();
+        var nbxplorerNetwork = NBXplorerNetworkProvider.GetFromCryptoCode("NAV");
         var network = new BTCPayNetwork()
         {
             CryptoCode = nbxplorerNetwork.CryptoCode,
