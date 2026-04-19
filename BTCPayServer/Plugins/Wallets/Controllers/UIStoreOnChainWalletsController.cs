@@ -754,7 +754,7 @@ public class UIStoreOnChainWalletsController(
     {
         vm.DerivationScheme = strategy.AccountDerivation.ToString();
         vm.AddressSamples = new();
-        // BLSCT address derivation uses native P/Invoke (libblsct) and is handled
+        // BLSCT address derivation uses NavioBlsct SWIG bindings and is handled
         // by NBXplorer's GenerateBlsctAddressesCore. GetPreviewResultData calls
         // GetLineFor which throws NotSupportedException for BLSCT strategies.
         // Address preview is skipped — addresses will be visible after wallet tracking starts.

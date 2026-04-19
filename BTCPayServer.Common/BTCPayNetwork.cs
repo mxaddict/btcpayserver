@@ -96,7 +96,7 @@ namespace BTCPayServer
         public bool SupportLightning { get; set; } = true;
         /// <summary>
         /// True for BLSCT-based coins (e.g. Navio). Wallet import uses audit key
-        /// instead of xpub, and address derivation uses native libblsct P/Invoke.
+        /// instead of xpub, and address derivation uses NavioBlsct SWIG bindings.
         /// </summary>
         public bool IsBLSCT { get; set; } = false;
 
