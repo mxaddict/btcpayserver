@@ -67,11 +67,13 @@ public class UIStoreOnChainWalletsController(
         vm.StoreId = storeId ?? vm.StoreId;
         vm.CryptoCode = cryptoCode ?? vm.CryptoCode;
 
-        var checkResult = IsAvailable(vm.CryptoCode, out var store, out _);
+        var checkResult = IsAvailable(vm.CryptoCode, out var store, out var network);
         if (checkResult != null)
         {
             return checkResult;
         }
+
+        vm.IsBLSCT = network?.IsBLSCT == true;
 
         var perm = await CanUseHotWallet();
         vm.SetPermission(perm);
@@ -105,6 +107,7 @@ public class UIStoreOnChainWalletsController(
         vm.SetPermission(perm);
         vm.SupportTaproot = network.NBitcoinNetwork.Consensus.SupportTaproot;
         vm.SupportSegwit = network.NBitcoinNetwork.Consensus.SupportSegwit;
+        vm.IsBLSCT = network.IsBLSCT;
 
         if (vm.Method == null)
         {
@@ -140,6 +143,7 @@ public class UIStoreOnChainWalletsController(
         }
 
         vm.Network = network;
+        vm.IsBLSCT = network.IsBLSCT;
 
         DerivationSchemeSettings strategy = null;
         PaymentMethodId paymentMethodId = PaymentTypes.CHAIN.GetPaymentMethodId(network.CryptoCode);
@@ -750,7 +754,11 @@ public class UIStoreOnChainWalletsController(
     {
         vm.DerivationScheme = strategy.AccountDerivation.ToString();
         vm.AddressSamples = new();
-        if (!string.IsNullOrEmpty(vm.DerivationScheme))
+        // BLSCT address derivation uses NavioBlsct SWIG bindings and is handled
+        // by NBXplorer's GenerateBlsctAddressesCore. GetPreviewResultData calls
+        // GetLineFor which throws NotSupportedException for BLSCT strategies.
+        // Address preview is skipped — addresses will be visible after wallet tracking starts.
+        if (!network.IsBLSCT && !string.IsNullOrEmpty(vm.DerivationScheme))
         {
             var result = GreenfieldStoreOnChainPaymentMethodsController.GetPreviewResultData(0, 10, network, strategy.AccountDerivation);
             foreach (var r in result.Addresses)
@@ -813,6 +821,24 @@ public class UIStoreOnChainWalletsController(
 
     public static DerivationSchemeSettings ParseDerivationStrategy(string derivationScheme, BTCPayNetwork network)
     {
+        // BLSCT audit key handling: accept raw 160-char hex (from getblsctauditkey)
+        // and auto-convert to blsct:VIEW_KEY:SPEND_KEY format.
+        if (network.IsBLSCT)
+        {
+            derivationScheme = derivationScheme.Trim();
+            // Raw 160-char hex: first 64 chars = view key, last 96 chars = spend key
+            if (derivationScheme.Length == 160 && Regex.IsMatch(derivationScheme, @"^[0-9a-fA-F]+$"))
+            {
+                derivationScheme = $"blsct:{derivationScheme[..64]}:{derivationScheme[64..]}";
+            }
+            // BlsctDerivationStrategyFactory.Parse uses 'new' (not 'override'),
+            // so we use reflection to dispatch to the runtime type's Parse method.
+            var factory = network.NBXplorerNetwork.DerivationStrategyFactory;
+            var parseMethod = factory.GetType().GetMethod("Parse", new[] { typeof(string) });
+            var strategy = (NBXplorer.DerivationStrategy.DerivationStrategyBase)parseMethod.Invoke(factory, new object[] { derivationScheme });
+            return new DerivationSchemeSettings(strategy, network);
+        }
+
         var parser = new DerivationSchemeParser(network);
         var isOD = Regex.Match(derivationScheme, @"\(.*?\)");
         if (isOD.Success)
@@ -820,7 +846,7 @@ public class UIStoreOnChainWalletsController(
             return parser.ParseOD(derivationScheme);
         }
 
-        var strategy = parser.Parse(derivationScheme);
-        return new DerivationSchemeSettings(strategy, network);
+        var strategy2 = parser.Parse(derivationScheme);
+        return new DerivationSchemeSettings(strategy2, network);
     }
 }

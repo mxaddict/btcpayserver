@@ -35,5 +35,6 @@ namespace BTCPayServer.Models.StoreViewModels
         public bool CanCreateNewColdWallet { get; set; }
         public bool SupportSegwit { get; set; }
         public bool SupportTaproot { get; set; }
+        public bool IsBLSCT { get; set; }
     }
 }

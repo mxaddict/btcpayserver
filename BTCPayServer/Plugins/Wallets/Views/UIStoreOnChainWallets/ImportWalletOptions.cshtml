@@ -5,6 +5,8 @@
 @inject BTCPayNetworkProvider BTCPayNetworkProvider
 @{
     ViewData.SetTitle(StringLocalizer["Import {0} Wallet", Model.CryptoCode]);
+    var network = BTCPayNetworkProvider.GetNetwork<BTCPayNetwork>(Model.CryptoCode);
+    var isBLSCT = network?.IsBLSCT == true;
 }
 
 @section Navbar {
@@ -23,7 +25,7 @@
         --icon-size: 2.5rem !important;
     }
 </style>
-@if (BTCPayNetworkProvider.GetNetwork<BTCPayNetwork>(Model.CryptoCode).VaultSupported)
+@if (network.VaultSupported)
 {
     <div class="mt-5">
         <div class="list-group">
@@ -58,6 +60,8 @@
     </div>
 }
 
+@if (!isBLSCT)
+{
 <div class="list-group mt-4">
     <a asp-controller="UIStoreOnChainWallets" asp-action="ImportWallet" asp-route-storeId="@Model.StoreId" asp-route-cryptoCode="@Model.CryptoCode" asp-route-method="file" id="ImportFileLink" class="list-group-item list-group-item-action">
         <div class="image">
@@ -73,20 +77,37 @@
         <vc:icon symbol="caret-right" />
     </a>
 </div>
+}
 
 <div class="list-group mt-4">
     <a asp-controller="UIStoreOnChainWallets" asp-action="ImportWallet" asp-route-storeId="@Model.StoreId" asp-route-cryptoCode="@Model.CryptoCode" asp-route-method="xpub" id="ImportXpubLink" class="list-group-item list-group-item-action">
         <div class="image">
             <vc:icon symbol="wallet-xpub"/>
         </div>
-        <div class="content">
-			<h4 text-translate="true">Enter extended public key</h4>
-			<p class="mb-0 text-secondary" text-translate="true">Input the key string manually</p>
+        <div class="content d-flex flex-column flex-lg-row align-items-lg-center justify-content-lg-between me-2">
+            <div>
+                @if (isBLSCT)
+                {
+                    <h4 text-translate="true">Enter BLSCT audit key</h4>
+                    <p class="mb-0 text-secondary" text-translate="true">Paste the audit key from your Navio wallet</p>
+                }
+                else
+                {
+                    <h4 text-translate="true">Enter extended public key</h4>
+                    <p class="mb-0 text-secondary" text-translate="true">Input the key string manually</p>
+                }
+            </div>
+            @if (isBLSCT)
+            {
+                <small class="d-block text-primary mt-2 mt-lg-0" text-translate="true">Recommended</small>
+            }
         </div>
         <vc:icon symbol="caret-right" />
     </a>
 </div>
 
+@if (!isBLSCT)
+{
 <div class="list-group mt-4">
     <a asp-controller="UIStoreOnChainWallets" asp-action="ImportWallet" asp-route-storeId="@Model.StoreId" asp-route-cryptoCode="@Model.CryptoCode" asp-route-method="scan" id="ImportScanLink" class="list-group-item list-group-item-action only-for-js">
         <div class="image">
@@ -129,3 +150,4 @@
         <vc:icon symbol="caret-right" />
     </a>
 </div>
+}

@@ -49,6 +49,8 @@ namespace BTCPayServer.Plugins.Altcoins
                 InitDash(services);
             if (selectedChains.Contains("GRS"))
                 InitGroestlcoin(services);
+            if (selectedChains.Contains("NAV"))
+                InitNavio(services);
         }
     }
 }

@@ -11,7 +11,14 @@
 
 <header class="text-center">
     <h1>@ViewData["Title"]</h1>
-    <p class="lead text-secondary mt-3" text-translate="true">Please check that your wallet is generating the same addresses as below.</p>
+    @if (Model.IsBLSCT)
+    {
+        <p class="lead text-secondary mt-3" text-translate="true">BLSCT audit key accepted. Addresses will be derived by the server using the native BLSCT library once tracking starts.</p>
+    }
+    else
+    {
+        <p class="lead text-secondary mt-3" text-translate="true">Please check that your wallet is generating the same addresses as below.</p>
+    }
 </header>
 
 <form method="post" asp-controller="UIStoreOnChainWallets" asp-action="UpdateWallet" asp-route-storeId="@Model.StoreId" asp-route-cryptoCode="@Model.CryptoCode">
@@ -22,6 +29,8 @@
     <input asp-for="RootFingerprint" type="hidden" />
     <input asp-for="KeyPath" type="hidden" />
 
+    @if (Model.AddressSamples?.Count > 0)
+    {
     <div class="table-responsive-sm">
         <table class="table table-hover w-auto mx-auto">
             <thead>
@@ -41,6 +50,14 @@
             </tbody>
         </table>
     </div>
+    }
+    @if (Model.IsBLSCT)
+    {
+    <div class="alert alert-info text-center mt-3">
+        <strong text-translate="true">Derivation scheme:</strong>
+        <code class="d-block mt-1 text-break">@Model.DerivationScheme</code>
+    </div>
+    }
 
     <div class="text-center">
         <button name="command" type="submit" class="btn btn-primary" value="save" id="Confirm" text-translate="true">Confirm</button>
